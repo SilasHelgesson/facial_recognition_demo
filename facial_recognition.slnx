@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="facial_recognition/facial_recognition.vcxproj" Id="b00ddc66-f15e-4d63-815c-44214dd57f36" />
+</Solution>
