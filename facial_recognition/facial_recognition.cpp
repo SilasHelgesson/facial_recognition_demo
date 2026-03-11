@@ -7,9 +7,6 @@ constexpr int NUM_IMAGES_PER_PERSON = 10;
 constexpr int NUM_PEOPLE = 15;
 constexpr int DIMENSION_X = 100;
 constexpr int DIMENSION_Y = 100;
-constexpr bool DISPLAY_FACES = true;
-constexpr const char* PATH_TO_TRAINING_DATA = "C:/Users/DrBre/source/repos/facial_recognition/facial_recognition/data/train/";
-constexpr const char* PATH_TO_TESTING_DATA = "C:/Users/DrBre/source/repos/facial_recognition/facial_recognition/data/test/";
 
 struct facial_data
 {
@@ -84,7 +81,7 @@ void prepare_labels(facial_data& data) {
     }
 }
 
-void read_training_images(facial_data& data) {
+void read_training_images(facial_data& data,std::string PATH_TO_TRAINING_DATA) {
     for (size_t i = 0; i < data.names.size(); i++) {
         for (size_t j = 0; j < NUM_IMAGES_PER_PERSON; j++) {
             std::string image_path = PATH_TO_TRAINING_DATA + convert_number_to_double_digit_string(i + 1) + "_" + convert_number_to_double_digit_string(j) + ".png";
@@ -127,12 +124,21 @@ prediction_result predict(const facial_data& data, const cv::Mat& test_image,cv:
     return prediction;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <training_data_path> <testing_data_path> <display_faces 0|1>" << std::endl;
+        return 1;
+    }
+
+    std::string PATH_TO_TRAINING_DATA = argv[1];
+    std::string PATH_TO_TESTING_DATA = argv[2];
+    bool DISPLAY_FACES = std::string(argv[3]) == "1";
+
     facial_data data;
 
     prepare_labels(data);
-    read_training_images(data);
+    read_training_images(data,PATH_TO_TRAINING_DATA);
     re_size_images(data.image_data);
 
     data.training_data = create_data_matrix(data.image_data);

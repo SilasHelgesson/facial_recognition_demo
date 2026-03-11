@@ -91,7 +91,7 @@ void read_training_images(facial_data& data) {
             cv::Mat image = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
             if (image.empty()) {
                 std::cerr << "OOPS ! Could not read image: " << image_path << std::endl;
-                continue;
+                std::exit(1);
             }
             data.image_data.push_back(image);
         }
@@ -157,6 +157,10 @@ int main()
     int successful_predictions = 0;
     for (const std::string& name : data.names) {
         cv::Mat test_img = cv::imread(PATH_TO_TESTING_DATA + name + ".png", cv::IMREAD_GRAYSCALE);
+        if (test_img.empty()) {
+            std::cerr << "OOPS ! Could not read image: " << PATH_TO_TESTING_DATA + name + ".png" << std::endl;
+            std::exit(1);
+        }
         cv::resize(test_img, test_img, cv::Size(DIMENSION_X, DIMENSION_Y));
         cv::Mat test_row;
         test_img.reshape(1, 1).convertTo(test_row, CV_32F);
