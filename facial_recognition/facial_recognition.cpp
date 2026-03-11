@@ -5,11 +5,9 @@
 
 #define NUM_IMAGES_PER_PERSON 10
 #define NUM_PEOPLE 15
-// Do Note: Our training data is already in a uniform format 
-// I just wanna add this because it does not take huge amount of time 
 #define DIMENSION_X 100
 #define DIMENSION_Y 100
-#define DISPLAY_FACES True 
+#define DISPLAY_FACES false 
 
 struct facial_data
 {
@@ -71,7 +69,6 @@ cv::Mat center_data(const cv::Mat& training_data, const cv::Mat& mean_face) {
 int main()
 {
 	facial_data data;
-	// we have exactly x images per person all of them are in order so we can just insert the labels in order
    
     data.names = { "Gordon Freeman","Alyx Vance","Eli Vance","Isaac Kleiner","Barney Calhoun","Judith Mossman","Wallace Breen","G-Man","Adrian Shephard","Odessa Cubbage","Arne Magnusson","Father Grigori","Russell","Laszlo","Dog" };
     data.labels.reserve(data.names.size() * NUM_IMAGES_PER_PERSON);
@@ -101,8 +98,11 @@ int main()
     cv::Mat mean_face_img = mean_face.reshape(1, DIMENSION_Y);
     cv::normalize(mean_face_img, mean_face_img, 0, 255, cv::NORM_MINMAX);
     mean_face_img.convertTo(mean_face_img, CV_8U);
-    //cv::imshow("Mean Face", mean_face_img);
-    //cv::waitKey(0);
+    if (DISPLAY_FACES) {
+        cv::imshow("Mean Face", mean_face_img);
+        cv::waitKey(0);
+
+    }
 
     cv::Mat cov = centered_data * centered_data.t();
     cv::Mat eigenvalues, eigenvectors;
@@ -115,31 +115,37 @@ int main()
         cv::normalize(ef, ef, 0, 255, cv::NORM_MINMAX);
         cv::Mat ef_img = ef.reshape(1, DIMENSION_Y);
         ef_img.convertTo(ef_img, CV_8U);
-        //cv::imshow("Eigenface " + std::to_string(i + 1), ef_img);
-        //cv::waitKey(0); 
+        if(DISPLAY_FACES) {
+            cv::imshow("Eigenface " + std::to_string(i + 1), ef_img);
+            cv::waitKey(0); 
+		}
     }
+	int successful_predictions = 0;
+	for (std::string name : data.names) {
+        cv::Mat test_img = cv::imread("C:/Users/DrBre/source/repos/facial_recognition/facial_recognition/data/test/" + name + ".png", cv::IMREAD_GRAYSCALE);
+        cv::resize(test_img, test_img, cv::Size(DIMENSION_X, DIMENSION_Y));
+        cv::Mat test_row;
+        test_img.reshape(1, 1).convertTo(test_row, CV_32F);
 
+        cv::Mat phi_test = test_row - mean_face;
+        cv::Mat omega_test = phi_test * eigenfaces;
 
-    cv::Mat test_img = cv::imread("C:/Users/DrBre/source/repos/facial_recognition/facial_recognition/data/test/01.png", cv::IMREAD_GRAYSCALE);
-    cv::resize(test_img, test_img, cv::Size(DIMENSION_X, DIMENSION_Y));
-    cv::Mat test_row;
-    test_img.reshape(1, 1).convertTo(test_row, CV_32F);
-
-    cv::Mat phi_test = test_row - mean_face;
-    cv::Mat omega_test = phi_test * eigenfaces;
-
-    int closest_idx = 0;
-    double min_dist = DBL_MAX;
-    for (int i = 0; i < centered_data.rows; i++) {
-        cv::Mat omega_train = centered_data.row(i) * eigenfaces;
-        double dist = cv::norm(omega_test, omega_train, cv::NORM_L2);
-        if (dist < min_dist) {
-            min_dist = dist;
-            closest_idx = i;
+        int closest_idx = 0;
+        double min_dist = DBL_MAX;
+        for (int i = 0; i < centered_data.rows; i++) {
+            cv::Mat omega_train = centered_data.row(i) * eigenfaces;
+            double dist = cv::norm(omega_test, omega_train, cv::NORM_L2);
+            if (dist < min_dist) {
+                min_dist = dist;
+                closest_idx = i;
+            }
         }
+		if (name == data.names[data.labels[closest_idx]]) {
+            successful_predictions++;
+        }
+        std::cout << "Person: " << name << " Predicted person: " << data.names[data.labels[closest_idx]]
+            << " (distance = " << min_dist << ")" << std::endl;
     }
-
-    std::cout << "Predicted person: " << data.names[data.labels[closest_idx]]
-        << " (distance = " << min_dist << ")" << std::endl;
+	std::cout << "Successful predictions: " << successful_predictions << "/" << data.names.size() << std::endl;
 }
 
